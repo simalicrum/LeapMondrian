@@ -1,17 +1,32 @@
 ﻿using CsvHelper;
+using Microsoft.Extensions.Configuration;
 using Mondrian.Metadata;
 using Mondrian.Models.Input;
 using Mondrian.Models.Source;
 using System.Globalization;
 using System.Text.RegularExpressions;
 
+var configuration = new ConfigurationBuilder()
+    .SetBasePath(Directory.GetCurrentDirectory())
+    .AddJsonFile("appsettings.json")
+    .Build();
+
+
+var inputFilePath = configuration["InputFilePath"];
+var outputMetadataYaml = configuration["OutputMetadataYaml"];
+var outputInputsJson = configuration["OutputInputsJson"];
+var dataStoragePrefix = configuration["DataStoragePrefix"];
+var dockerImage = configuration["DockerImage"];
+var metadataYamlPath = configuration["MetadataYamlPath"];
+var referenceGenomes = configuration["ReferenceGenomes"];
+
 Console.WriteLine("Opening Source Csv..");
-// comment
-using (var reader = new StreamReader("metadata_scy-263.csv"))
+
+using (var reader = new StreamReader(inputFilePath))
 using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
 {
   Console.WriteLine("Parsing Csv..");
-  var prefix = "/rrdevcfa2047244445/inputs/scy-263/dataset/SCY-263/";
+  var prefix = dataStoragePrefix;
   var records = csv.GetRecords<LeapCsv>();
   var cellRecords = new Dictionary<CellRecord, InputCell>();
   foreach (var record in records)
@@ -100,56 +115,56 @@ using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
   // Generate metadata.yaml and write to file
   Console.WriteLine("Writing metadata.yaml");
   Metadata metadata = new(InputCells);
-  using (StreamWriter outputFile = new("scy263-metadata.yaml"))
+  using (StreamWriter outputFile = new(outputMetadataYaml))
   {
     await outputFile.WriteAsync(metadata.Yaml);
   }
   // Generate inputs.json and write to file
   AlignmentWorkflow alignmentWorkflow = new()
   {
-    docker_image = "quay.io/mondrianscwgs/alignment:v0.0.84",
-    metadata_yaml = "/rrdevcfa2047244445/inputs/scy-263/scy263-metadata.yaml",
+    docker_image = dockerImage,
+    metadata_yaml = metadataYamlPath,
     reference = new ReferenceGenome()
     {
       genome_name = "human",
-      reference = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/human/GRCh37-lite.fa",
-      reference_fa_fai = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/human/GRCh37-lite.fa.fai",
-      reference_fa_amb = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/human/GRCh37-lite.fa.amb",
-      reference_fa_ann = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/human/GRCh37-lite.fa.ann",
-      reference_fa_bwt = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/human/GRCh37-lite.fa.bwt",
-      reference_fa_pac = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/human/GRCh37-lite.fa.pac",
-      reference_fa_sa = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/human/GRCh37-lite.fa.sa",
+      reference = $"{referenceGenomes}/human/GRCh37-lite.fa",
+      reference_fa_fai = $"{referenceGenomes}/human/GRCh37-lite.fa.fai",
+      reference_fa_amb = $"{referenceGenomes}/human/GRCh37-lite.fa.amb",
+      reference_fa_ann = $"{referenceGenomes}/human/GRCh37-lite.fa.ann",
+      reference_fa_bwt = $"{referenceGenomes}/human/GRCh37-lite.fa.bwt",
+      reference_fa_pac = $"{referenceGenomes}/human/GRCh37-lite.fa.pac",
+      reference_fa_sa = $"{referenceGenomes}/human/GRCh37-lite.fa.sa",
     },
     supplimentary_references = new List<ReferenceGenome>
   {
     new ReferenceGenome()
     {
       genome_name = "mouse",
-      reference = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/mouse/mm10_build38_mouse.fasta",
-      reference_fa_fai = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/mouse/mm10_build38_mouse.fasta.fai",
-      reference_fa_amb = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/mouse/mm10_build38_mouse.fasta.amb",
-      reference_fa_ann = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/mouse/mm10_build38_mouse.fasta.ann",
-      reference_fa_bwt = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/mouse/mm10_build38_mouse.fasta.bwt",
-      reference_fa_pac = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/mouse/mm10_build38_mouse.fasta.pac",
-      reference_fa_sa = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/mouse/mm10_build38_mouse.fasta.sa"
+      reference = $"{referenceGenomes}/mouse/mm10_build38_mouse.fasta",
+      reference_fa_fai = $"{referenceGenomes}/mouse/mm10_build38_mouse.fasta.fai",
+      reference_fa_amb = $"{referenceGenomes}/mouse/mm10_build38_mouse.fasta.amb",
+      reference_fa_ann = $"{referenceGenomes}/mouse/mm10_build38_mouse.fasta.ann",
+      reference_fa_bwt = $"{referenceGenomes}/mouse/mm10_build38_mouse.fasta.bwt",
+      reference_fa_pac = $"{referenceGenomes}/mouse/mm10_build38_mouse.fasta.pac",
+      reference_fa_sa = $"{referenceGenomes}/mouse/mm10_build38_mouse.fasta.sa"
     },
     new ReferenceGenome()
     {
       genome_name = "salmon",
-      reference = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/salmon/GCF_002021735.1_Okis_V1_genomic.fna",
-      reference_fa_fai = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/salmon/GCF_002021735.1_Okis_V1_genomic.fna.fai",
-      reference_fa_amb = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/salmon/GCF_002021735.1_Okis_V1_genomic.fna.amb",
-      reference_fa_ann = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/salmon/GCF_002021735.1_Okis_V1_genomic.fna.ann",
-      reference_fa_bwt = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/salmon/GCF_002021735.1_Okis_V1_genomic.fna.bwt",
-      reference_fa_pac = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/salmon/GCF_002021735.1_Okis_V1_genomic.fna.pac",
-      reference_fa_sa = "/rrdevcfa2047244445/datasets/reference/mondrian-ref-GRCh37/salmon/GCF_002021735.1_Okis_V1_genomic.fna.sa"
+      reference = $"{referenceGenomes}/salmon/GCF_002021735.1_Okis_V1_genomic.fna",
+      reference_fa_fai = $"{referenceGenomes}/salmon/GCF_002021735.1_Okis_V1_genomic.fna.fai",
+      reference_fa_amb = $"{referenceGenomes}/salmon/GCF_002021735.1_Okis_V1_genomic.fna.amb",
+      reference_fa_ann = $"{referenceGenomes}/salmon/GCF_002021735.1_Okis_V1_genomic.fna.ann",
+      reference_fa_bwt = $"{referenceGenomes}/salmon/GCF_002021735.1_Okis_V1_genomic.fna.bwt",
+      reference_fa_pac = $"{referenceGenomes}/salmon/GCF_002021735.1_Okis_V1_genomic.fna.pac",
+      reference_fa_sa = $"{referenceGenomes}/salmon/GCF_002021735.1_Okis_V1_genomic.fna.sa"
     }
   },
     fastq_files = new List<Mondrian.Models.Input.Cell>()
   };
   Console.WriteLine("Writing inputs.json");
   Inputs inputs = new(InputCells, alignmentWorkflow);
-  using (StreamWriter outputFile = new("scy263-inputs.json"))
+  using (StreamWriter outputFile = new(outputInputsJson))
   {
     await outputFile.WriteAsync(inputs.Json);
   }
