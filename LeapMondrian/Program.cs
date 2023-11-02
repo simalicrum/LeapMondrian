@@ -6,6 +6,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 
 Console.WriteLine("Opening Source Csv..");
+// comment
 using (var reader = new StreamReader("metadata_scy-263.csv"))
 using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
 {
