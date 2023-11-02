@@ -81,8 +81,8 @@ using (var csv = new CsvReader(reader, CultureInfo.InvariantCulture))
               Cell = (Mondrian.Models.Aggregate.Cell)Cell,
               Lane = new Mondrian.Models.Aggregate.Lane()
               {
-                fastq1 = azurePath,
-                fastq2 = "",
+                fastq1 = "",
+                fastq2 = azurePath,
                 flowcell_id = record.flow_cells,
                 lane_id = cellRecord.Lane
               }
